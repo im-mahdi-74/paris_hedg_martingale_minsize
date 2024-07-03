@@ -301,6 +301,8 @@ def order_close(symbol):
                 return  True
 
 
+main_win = {}
+
 def close_pos(tickit_one_one, tickit_one_tow, tickit_tow_one, tickit_tow_tow ):
     
 
@@ -310,60 +312,103 @@ def close_pos(tickit_one_one, tickit_one_tow, tickit_tow_one, tickit_tow_tow ):
     positions_tow_tow = mt5.positions_get(ticket=tickit_tow_tow.order)[0]
 
     
+    
     while True:
         time.sleep(0.02)
 
-
-        
-
-
-
-        print(mt5.positions_get(ticket=tickit_one_one.order)[0].profit  + mt5.positions_get(ticket=tickit_one_tow.order)[0].profit)
-        if mt5.positions_get(ticket=tickit_one_one.order)[0].profit  + mt5.positions_get(ticket=tickit_one_tow.order)[0].profit  >=  0.25 : 
-            close(tickit_one_one.order)
-            close(tickit_one_tow.order)
-
-
-
-            if mt5.positions_get(ticket=tickit_tow_one.order) == None  or  mt5.positions_get(ticket=tickit_tow_tow.order) == None :
-                break        
-
-            while True:
-                time.sleep(0.02)
-                if mt5.positions_get(ticket=tickit_tow_one.order)[0].profit  + mt5.positions_get(ticket=tickit_tow_tow.order)[0].profit  >=  0 : 
-                    close(tickit_tow_one.order)
-                    close(tickit_tow_tow.order)
-                    break
-
-        
         if mt5.positions_get(ticket=tickit_one_one.order) == None  or   mt5.positions_get(ticket=tickit_one_tow.order) == None :
+            if mt5.positions_get(ticket=tickit_tow_one.order)  is not None  or  mt5.positions_get(ticket=tickit_tow_tow.order) is not None :
+                close(tickit_tow_one.order)
+                close(tickit_tow_tow.order)
+
             break
 
+        else:
+
+
+            if mt5.positions_get(ticket=tickit_one_one.order)[0].profit  + mt5.positions_get(ticket=tickit_one_tow.order)[0].profit  >=  6 : 
+                close(tickit_one_one.order)
+                close(tickit_one_tow.order)
+                main_win['win'] += 1
+
+
+                if mt5.positions_get(ticket=tickit_tow_one.order) == None  or  mt5.positions_get(ticket=tickit_tow_tow.order) == None :
+                    break        
+
+                while True:
+                    time.sleep(0.02)
+                    if mt5.positions_get(ticket=tickit_tow_one.order)[0].profit  + mt5.positions_get(ticket=tickit_tow_tow.order)[0].profit  >=  0 : 
+                        close(tickit_tow_one.order)
+                        close(tickit_tow_tow.order)
+                        break
+
+        
 
 
 
 
-
-        if mt5.positions_get(ticket=tickit_tow_one.order)[0].profit  + mt5.positions_get(ticket=tickit_tow_tow.order)[0].profit  >=  0.25 : 
-            close(tickit_tow_one.order)
-            close(tickit_tow_tow.order)
-
-            if mt5.positions_get(ticket=tickit_one_one.order) == None  or   mt5.positions_get(ticket=tickit_one_tow.order) == None :
-                break
-
-            while True:
-                time.sleep(0.02)
-                if mt5.positions_get(ticket=tickit_one_one.order)[0].profit  + mt5.positions_get(ticket=tickit_one_tow.order)[0].profit  >=  0 : 
-                    close(tickit_one_one.order)
-                    close(tickit_one_tow.order)
-                    break
 
 
         if mt5.positions_get(ticket=tickit_tow_one.order) == None  or  mt5.positions_get(ticket=tickit_tow_tow.order) == None :
+            if mt5.positions_get(ticket=tickit_one_one.order)  is not None  or  mt5.positions_get(ticket=tickit_one_tow.order) is not None :
+                close(tickit_one_one.order)
+                close(tickit_one_tow.order)
+
             break
 
+        else:
 
+            if mt5.positions_get(ticket=tickit_tow_one.order)[0].profit  + mt5.positions_get(ticket=tickit_tow_tow.order)[0].profit  >=  6 : 
+                close(tickit_tow_one.order)
+                close(tickit_tow_tow.order)
+                main_win['win'] += 1
+
+
+                if mt5.positions_get(ticket=tickit_one_one.order) == None  or   mt5.positions_get(ticket=tickit_one_tow.order) == None :
+                    break
+
+                while True:
+                    time.sleep(0.02)
+                    if mt5.positions_get(ticket=tickit_one_one.order)[0].profit  + mt5.positions_get(ticket=tickit_one_tow.order)[0].profit  >=  0 : 
+                        close(tickit_one_one.order)
+                        close(tickit_one_tow.order)
+                        break
+
+
+
+
+def clean():
+
+    while True:
+        time.sleep(0.5)
+
+        if main_win.get('win', 0) // 10 == 1:
+            should_break = False  # متغیر کمکی برای کنترل خروج از حلقه‌ها
+            for pros in dic_order:
+                for i in pros:
+                    positions_0 = mt5.positions_get(ticket=i[0].order)
+                    positions_1 = mt5.positions_get(ticket=i[1].order)
                     
+                    # اطمینان حاصل کنید که هر دو پوزیشن معتبر و دارای سود می‌باشند
+                    if positions_0 and positions_1:
+                        profit_0 = positions_0[0].profit
+                        profit_1 = positions_1[0].profit
+                        
+                        # اصلاح شرط ترکیبی
+                        if -30 < profit_0 + profit_1 < -20:
+                            close(i[0].order)
+                            close(i[1].order)
+                            should_break = True  # تنظیم متغیر کمکی برای خروج از حلقه‌ها
+                            break
+                if should_break:
+                    break  # خروج از حلقه بیرونی اگر متغیر کمکی تنظیم شده باشد
+
+
+            
+
+
+
+
 
 def sod_sang(tickit_one_one, tickit_one_tow, tickit_tow_one, tickit_tow_tow):
 
@@ -433,11 +478,11 @@ def run():
     if 0 < now.hour < 24   :
         try:
 
-            if len(mt5.positions_get(symbol='GBPUSD_o')) < 500 :
-                tickit_one_one =  buy('GBPUSD_o', 0.01 , 0 , 0 , 'one')
-                tickit_one_tow =  sell('EURUSD_o', 0.01 , 0 , 0 , 'one')
-                tickit_tow_one =  sell('GBPUSD_o', 0.01 , 0 , 0 , 'tow')
-                tickit_tow_tow =  buy('EURUSD_o', 0.01 , 0 , 0 , 'tow')
+            if len(mt5.positions_get(symbol='GBPUSD_o')) < 20 :
+                tickit_one_one =  buy('GBPUSD_o', 0.17 , 0 , 0 , 'one')
+                tickit_one_tow =  sell('EURUSD_o', 0.2 , 0 , 0 , 'one')
+                tickit_tow_one =  sell('GBPUSD_o', 0.17 , 0 , 0 , 'tow')
+                tickit_tow_tow =  buy('EURUSD_o', 0.2 , 0 , 0 , 'tow')
 
                 return tickit_one_one , tickit_one_tow , tickit_tow_one , tickit_tow_tow
                 
@@ -460,19 +505,23 @@ def run():
             print(f"Error: {e}")
             time.sleep(60)  # Wait for 1 minute before retrying
 
+
+dic_order = {}
         
 def main():
-
+    num_trade = 0
     while True:
 
         print(datetime.datetime.now(tehran_timezone))
         tickit_one_one , tickit_one_tow , tickit_tow_one , tickit_tow_tow = run()
+        dic_order[num_trade] = [[tickit_one_one , tickit_one_tow ], [tickit_tow_one , tickit_tow_tow]]
+        num_trade += 1
 
         if tickit_one_one and tickit_one_tow and tickit_tow_one and tickit_tow_tow :
             
 
             sod_sang(tickit_one_one , tickit_one_tow , tickit_tow_one , tickit_tow_tow)
-        time.sleep(90)
+        time.sleep(1800)
 
 
 main()
